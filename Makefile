@@ -12,7 +12,7 @@ COMPILER_FLAGS = -Wall
 LINKER_FLAGS = -lSDL2
 
 #OBJ_NAME specifies the name of our exectuable
-OBJ_NAME = SDL_tutorial 
+OBJ_NAME = ./build/SDL_tutorial 
 
 #This is the target that compiles our executable
 all : $(OBJS)
