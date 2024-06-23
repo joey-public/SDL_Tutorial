@@ -23,16 +23,20 @@ SDL_Surface* gScreenSurface = NULL;
 SDL_Surface* gKeyPressSurfaces[KEY_PRESS_SURFACE_TOTAL];
 SDL_Surface* gCurrentSurface = NULL;
 SDL_Surface* gPNGSurface = NULL;
+SDL_Renderer* gRenderer = NULL;
+SDL_Texture* gTexture = NULL;
 
 //function declarations
 bool init();
 bool loadMedia();
 SDL_Surface* loadSurface(std::string path);
+SDL_Texture* loadTexture(std::string path);
 void myClose();//apparently cannot use C for this 
 
 //SDL requires the int argc and char* args[] arguments 
 int main(int argc, char* args[])
 {
+    bool renderTexture = false;
     if(!init())
     {
         printf("Failed to initilize!\n");
@@ -60,6 +64,7 @@ int main(int argc, char* args[])
                     }
                     else if(e.type == SDL_KEYDOWN)
                     {
+                        renderTexture = false;
                         switch(e.key.keysym.sym)
                         {
                             case SDLK_UP:
@@ -77,20 +82,29 @@ int main(int argc, char* args[])
                             case SDLK_j:
                             gCurrentSurface = gPNGSurface;
                             break;
+                            case SDLK_k:
+                            renderTexture = true;
+                            break;
                             default:
                             gCurrentSurface = gKeyPressSurfaces[KEY_PRESS_SURFACE_DEFAULT];
                             break;
                         }
                     }
                 }
-                SDL_Rect strecthRect;
-                strecthRect.x = 0;
-                strecthRect.y = 0;
-                strecthRect.w = SCREEN_WIDTH/2;
-                strecthRect.h = SCREEN_HEIGHT/2;
-                // SDL_BlitSurface(gCurrentSurface, NULL, gScreenSurface, NULL);
-                SDL_BlitScaled(gCurrentSurface, NULL, gScreenSurface, &strecthRect);
-                SDL_UpdateWindowSurface(gWindow);
+                if(!renderTexture)
+                {
+                    SDL_Rect strecthRect; strecthRect.x = 0; strecthRect.y = 0; strecthRect.w = SCREEN_WIDTH/2;
+                    strecthRect.h = SCREEN_HEIGHT/2;
+                    // SDL_BlitSurface(gCurrentSurface, NULL, gScreenSurface, NULL);
+                    SDL_BlitScaled(gCurrentSurface, NULL, gScreenSurface, &strecthRect);
+                    SDL_UpdateWindowSurface(gWindow);
+                }
+                else
+                {
+                    SDL_RenderClear(gRenderer);
+                    SDL_RenderCopy(gRenderer, gTexture, NULL, NULL);
+                    SDL_RenderPresent(gRenderer);
+                }
             }
         }
     }
@@ -125,6 +139,18 @@ bool init()
         }
         else
         {
+            gRenderer = SDL_CreateRenderer(gWindow, -1, 
+                                            SDL_RENDERER_ACCELERATED);
+            if(gRenderer==NULL)
+            {
+                printf("Renderer could not be created! SDL Error: %s\n", 
+                       SDL_GetError());
+                success = false;
+            }
+            else
+            {
+                SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
+            }
             int imgFlags = IMG_INIT_PNG;
             if(!(IMG_Init(imgFlags) & imgFlags))
             {
@@ -144,6 +170,13 @@ bool init()
 bool loadMedia()
 {
     bool success = true;
+    //load PNG texture
+    gTexture = loadTexture("images/texture.png");
+    if(gTexture == NULL)
+    {
+        printf("Failed to load texture image!\n");
+        success = false;
+    }
     //load png surface
     gPNGSurface = loadSurface("images/loaded.png");
     if(gPNGSurface == NULL)
@@ -212,17 +245,46 @@ SDL_Surface* loadSurface(std::string path)
     return optimizedSurface;
 }
 
+SDL_Texture* loadTexture(std::string path)
+{
+    SDL_Texture* newTexture = NULL;
+    SDL_Surface* loadedSurface = IMG_Load(path.c_str());
+    if(loadedSurface==NULL)
+    {
+        printf("Unable to load image %s!\n SDL_image Error: %s\n", 
+               path.c_str(), IMG_GetError());
+    }
+    else
+    {
+        newTexture = SDL_CreateTextureFromSurface(gRenderer, loadedSurface);
+        if(newTexture==NULL)
+        {
+            printf("Unable to create texture from %s!\n SDL Error: %s\n", 
+                   path.c_str(), SDL_GetError());
+        }
+        SDL_FreeSurface(loadedSurface);
+    }
+    return newTexture;
+}
+
 void myClose()
 {
     for(int i = 0; i < KEY_PRESS_SURFACE_TOTAL; i++){
         SDL_FreeSurface(gKeyPressSurfaces[i]);
         gKeyPressSurfaces[i] = NULL;
     }
+
+    SDL_DestroyTexture(gTexture);
+    gTexture = NULL;
+
     SDL_FreeSurface(gPNGSurface);
     gPNGSurface = NULL;
 
+    SDL_DestroyRenderer(gRenderer);
     SDL_DestroyWindow(gWindow);
     gWindow = NULL;
+    gRenderer = NULL;
 
+    IMG_Quit();
     SDL_Quit();
 }
