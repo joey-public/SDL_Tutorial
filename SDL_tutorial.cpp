@@ -247,24 +247,33 @@ SDL_Surface* loadSurface(std::string path)
 
 SDL_Texture* loadTexture(std::string path)
 {
-    SDL_Texture* newTexture = NULL;
-    SDL_Surface* loadedSurface = IMG_Load(path.c_str());
-    if(loadedSurface==NULL)
+    //loading TEsture using SDL_IMG
+    SDL_Texture* newTexture = IMG_LoadTexture(gRenderer, path.c_str());
+    if(newTexture==NULL)
     {
-        printf("Unable to load image %s!\n SDL_image Error: %s\n", 
-               path.c_str(), IMG_GetError());
-    }
-    else
-    {
-        newTexture = SDL_CreateTextureFromSurface(gRenderer, loadedSurface);
-        if(newTexture==NULL)
-        {
-            printf("Unable to create texture from %s!\n SDL Error: %s\n", 
-                   path.c_str(), SDL_GetError());
-        }
-        SDL_FreeSurface(loadedSurface);
+        printf("Unable to create texture from %s!\n SDL Error: %s\n", 
+        path.c_str(), IMG_GetError());
     }
     return newTexture;
+    //old way of loading Texture with SDL
+    // SDL_Texture* newTexture = NULL;
+    // SDL_Surface* loadedSurface = IMG_Load(path.c_str());
+    // if(loadedSurface==NULL)
+    // {
+    //     printf("Unable to load image %s!\n SDL_image Error: %s\n", 
+    //            path.c_str(), IMG_GetError());
+    // }
+    // else
+    // {
+    //     newTexture = SDL_CreateTextureFromSurface(gRenderer, loadedSurface);
+    //     if(newTexture==NULL)
+    //     {
+    //         printf("Unable to create texture from %s!\n SDL Error: %s\n", 
+    //                path.c_str(), SDL_GetError());
+    //     }
+    //     SDL_FreeSurface(loadedSurface);
+    // }
+    // return newTexture;
 }
 
 void myClose()
