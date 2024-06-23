@@ -1,8 +1,7 @@
-//Using SDL and standard IO
-//includes
-#include <SDL2/SDL.h>
 #include <stdio.h>
 #include <string>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
 
 //Global Constants
 const int SCREEN_WIDTH = 640;
@@ -23,6 +22,7 @@ SDL_Window* gWindow = NULL;
 SDL_Surface* gScreenSurface = NULL;
 SDL_Surface* gKeyPressSurfaces[KEY_PRESS_SURFACE_TOTAL];
 SDL_Surface* gCurrentSurface = NULL;
+SDL_Surface* gPNGSurface = NULL;
 
 //function declarations
 bool init();
@@ -47,7 +47,8 @@ int main(int argc, char* args[])
         {
             bool quit = false;
             SDL_Event e;
-            gCurrentSurface = gKeyPressSurfaces[KEY_PRESS_SURFACE_DEFAULT];
+            // gCurrentSurface = gKeyPressSurfaces[KEY_PRESS_SURFACE_DEFAULT];
+            gCurrentSurface = gPNGSurface; 
             //event loop
             while(!quit)
             {
@@ -73,6 +74,9 @@ int main(int argc, char* args[])
                             case SDLK_RIGHT:
                             gCurrentSurface = gKeyPressSurfaces[KEY_PRESS_SURFACE_RIGHT];
                             break;
+                            case SDLK_j:
+                            gCurrentSurface = gPNGSurface;
+                            break;
                             default:
                             gCurrentSurface = gKeyPressSurfaces[KEY_PRESS_SURFACE_DEFAULT];
                             break;
@@ -97,11 +101,13 @@ int main(int argc, char* args[])
 // function implementations
 bool init()
 {
+    bool success = true;
     //Init SDL
     if(SDL_Init(SDL_INIT_VIDEO) < 0)
     {
-        printf("SDL could not initilize! SDL_Error: %s\n", SDL_GetError());
-        return false;
+        printf("SDL could not initilize! SDL_Error: %s\n",
+               SDL_GetError());
+        success = false;
     }
     else
     {
@@ -113,22 +119,40 @@ bool init()
                                     SDL_WINDOW_SHOWN);
         if(gWindow==NULL)
         {
-            printf("Window could not be created! SDL_Error: %s\n", SDL_GetError());
-            return false;
+            printf("Window could not be created! SDL_Error: %s\n", 
+                   SDL_GetError());
+            success = false;
         }
         else
         {
-            gScreenSurface = SDL_GetWindowSurface(gWindow);
+            int imgFlags = IMG_INIT_PNG;
+            if(!(IMG_Init(imgFlags) & imgFlags))
+            {
+                printf("SDL_image could not init!\n SDL_image Error: %s\n",
+                           IMG_GetError());
+                success = false;
+            }
+            else
+            {
+                gScreenSurface = SDL_GetWindowSurface(gWindow);
+            }
         }
     }
-    return true;
+    return success;
 }
 
 bool loadMedia()
 {
     bool success = true;
+    //load png surface
+    gPNGSurface = loadSurface("images/loaded.png");
+    if(gPNGSurface == NULL)
+    {
+        printf("Failed to load png image!\n");
+        success = false;
+    }
+    //load default surface
     gKeyPressSurfaces[KEY_PRESS_SURFACE_DEFAULT] = loadSurface("images/press.bmp");
-
     if(gKeyPressSurfaces[KEY_PRESS_SURFACE_DEFAULT] == NULL)
     {
         printf("Failed to load default image!\n");
@@ -168,10 +192,11 @@ bool loadMedia()
 SDL_Surface* loadSurface(std::string path)
 {
     SDL_Surface* optimizedSurface = NULL;
-    SDL_Surface* loadedSurface = SDL_LoadBMP(path.c_str());
+    SDL_Surface* loadedSurface = IMG_Load(path.c_str());
     if(loadedSurface == NULL)
     {
-        printf("Unable to load image %s!\n SDL Error: %s\n", path.c_str(), SDL_GetError());
+        printf("Unable to load image %s!\n SDL Error: %s\n", 
+               path.c_str(), SDL_GetError());
     }
     //convert loadedSurface to optimizedSurface
     else
@@ -179,7 +204,8 @@ SDL_Surface* loadSurface(std::string path)
         optimizedSurface = SDL_ConvertSurface(loadedSurface, gScreenSurface->format, 0);
         if(optimizedSurface==NULL)
         {
-            printf("Unable to optimize image %s!\nSDL Error: %s\n", path.c_str(), SDL_GetError());
+            printf("Unable to optimize image %s!\nSDL Error: %s\n", 
+                   path.c_str(), SDL_GetError());
         }
         SDL_FreeSurface(loadedSurface);
     }
@@ -192,6 +218,8 @@ void myClose()
         SDL_FreeSurface(gKeyPressSurfaces[i]);
         gKeyPressSurfaces[i] = NULL;
     }
+    SDL_FreeSurface(gPNGSurface);
+    gPNGSurface = NULL;
 
     SDL_DestroyWindow(gWindow);
     gWindow = NULL;
