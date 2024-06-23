@@ -79,7 +79,13 @@ int main(int argc, char* args[])
                         }
                     }
                 }
-                SDL_BlitSurface(gCurrentSurface, NULL, gScreenSurface, NULL);
+                SDL_Rect strecthRect;
+                strecthRect.x = 0;
+                strecthRect.y = 0;
+                strecthRect.w = SCREEN_WIDTH/2;
+                strecthRect.h = SCREEN_HEIGHT/2;
+                // SDL_BlitSurface(gCurrentSurface, NULL, gScreenSurface, NULL);
+                SDL_BlitScaled(gCurrentSurface, NULL, gScreenSurface, &strecthRect);
                 SDL_UpdateWindowSurface(gWindow);
             }
         }
@@ -121,8 +127,8 @@ bool init()
 bool loadMedia()
 {
     bool success = true;
-
     gKeyPressSurfaces[KEY_PRESS_SURFACE_DEFAULT] = loadSurface("images/press.bmp");
+
     if(gKeyPressSurfaces[KEY_PRESS_SURFACE_DEFAULT] == NULL)
     {
         printf("Failed to load default image!\n");
@@ -156,20 +162,28 @@ bool loadMedia()
         printf( "Failed to load right image!\n" );
         success = false;
     }
-
-
     return success;
 }
 
 SDL_Surface* loadSurface(std::string path)
 {
-    //Load image at specified path
+    SDL_Surface* optimizedSurface = NULL;
     SDL_Surface* loadedSurface = SDL_LoadBMP(path.c_str());
     if(loadedSurface == NULL)
     {
         printf("Unable to load image %s!\n SDL Error: %s\n", path.c_str(), SDL_GetError());
     }
-    return loadedSurface;
+    //convert loadedSurface to optimizedSurface
+    else
+    {
+        optimizedSurface = SDL_ConvertSurface(loadedSurface, gScreenSurface->format, 0);
+        if(optimizedSurface==NULL)
+        {
+            printf("Unable to optimize image %s!\nSDL Error: %s\n", path.c_str(), SDL_GetError());
+        }
+        SDL_FreeSurface(loadedSurface);
+    }
+    return optimizedSurface;
 }
 
 void myClose()
