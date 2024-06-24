@@ -31,12 +31,14 @@ bool init();
 bool loadMedia();
 SDL_Surface* loadSurface(std::string path);
 SDL_Texture* loadTexture(std::string path);
+void drawPicture();
 void myClose();//apparently cannot use C for this 
 
 //SDL requires the int argc and char* args[] arguments 
 int main(int argc, char* args[])
 {
     bool renderTexture = false;
+    bool renderGeometry = false;
     if(!init())
     {
         printf("Failed to initilize!\n");
@@ -65,6 +67,7 @@ int main(int argc, char* args[])
                     else if(e.type == SDL_KEYDOWN)
                     {
                         renderTexture = false;
+                        renderGeometry = false;
                         switch(e.key.keysym.sym)
                         {
                             case SDLK_UP:
@@ -85,13 +88,16 @@ int main(int argc, char* args[])
                             case SDLK_k:
                             renderTexture = true;
                             break;
+                            case SDLK_l:
+                            renderGeometry = true;
+                            break;
                             default:
                             gCurrentSurface = gKeyPressSurfaces[KEY_PRESS_SURFACE_DEFAULT];
                             break;
                         }
                     }
                 }
-                if(!renderTexture)
+                if(!renderTexture & !renderGeometry)
                 {
                     SDL_Rect strecthRect; strecthRect.x = 0; strecthRect.y = 0; strecthRect.w = SCREEN_WIDTH/2;
                     strecthRect.h = SCREEN_HEIGHT/2;
@@ -101,9 +107,17 @@ int main(int argc, char* args[])
                 }
                 else
                 {
-                    SDL_RenderClear(gRenderer);
-                    SDL_RenderCopy(gRenderer, gTexture, NULL, NULL);
-                    SDL_RenderPresent(gRenderer);
+                    if(renderGeometry)
+                    {
+                        drawPicture();
+                        SDL_RenderPresent(gRenderer);
+                    }
+                    else
+                    {
+                        SDL_RenderClear(gRenderer);
+                        SDL_RenderCopy(gRenderer, gTexture, NULL, NULL);
+                        SDL_RenderPresent(gRenderer);
+                    }
                 }
             }
         }
@@ -255,25 +269,33 @@ SDL_Texture* loadTexture(std::string path)
         path.c_str(), IMG_GetError());
     }
     return newTexture;
-    //old way of loading Texture with SDL
-    // SDL_Texture* newTexture = NULL;
-    // SDL_Surface* loadedSurface = IMG_Load(path.c_str());
-    // if(loadedSurface==NULL)
-    // {
-    //     printf("Unable to load image %s!\n SDL_image Error: %s\n", 
-    //            path.c_str(), IMG_GetError());
-    // }
-    // else
-    // {
-    //     newTexture = SDL_CreateTextureFromSurface(gRenderer, loadedSurface);
-    //     if(newTexture==NULL)
-    //     {
-    //         printf("Unable to create texture from %s!\n SDL Error: %s\n", 
-    //                path.c_str(), SDL_GetError());
-    //     }
-    //     SDL_FreeSurface(loadedSurface);
-    // }
-    // return newTexture;
+}
+
+void drawPicture()
+{
+    SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
+    SDL_RenderClear(gRenderer);
+    SDL_Rect fillRect = {
+         SCREEN_WIDTH /4, 
+         SCREEN_HEIGHT/4, 
+         SCREEN_WIDTH/2, 
+         SCREEN_HEIGHT/2};
+    SDL_SetRenderDrawColor(gRenderer, 0xFF, 0x00, 0x00, 0xFF);
+    SDL_RenderFillRect(gRenderer, &fillRect);
+    SDL_Rect outlineRect = {
+         SCREEN_WIDTH /6, 
+         SCREEN_HEIGHT/6, 
+         2*SCREEN_WIDTH/3, 
+         2*SCREEN_HEIGHT/3};
+    SDL_SetRenderDrawColor(gRenderer, 0x00, 0xFF, 0x00, 0xFF);
+    SDL_RenderDrawRect(gRenderer, &outlineRect);
+    SDL_SetRenderDrawColor(gRenderer, 0x00, 0x00, 0xFF, 0xFF);
+    SDL_RenderDrawLine(gRenderer, 0, SCREEN_HEIGHT/2, SCREEN_WIDTH, SCREEN_HEIGHT/2);
+    SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0x00, 0xFF);
+    for(int i=0; i<SCREEN_HEIGHT; i+=4)
+    {
+        SDL_RenderDrawPoint(gRenderer, SCREEN_WIDTH/2, i);
+    }
 }
 
 void myClose()
