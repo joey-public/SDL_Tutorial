@@ -22,6 +22,7 @@ all : $(OBJS)
 db : $(OBJS)
 	$(CC) $(OBJS) $(COMPILER_FLAGS) $(LINKER_FLAGS) $(DEBUG_FLAGS) -o $(OBJ_NAME)  
 run : 
+	$(CC) $(OBJS) $(COMPILER_FLAGS) $(LINKER_FLAGS) -o $(OBJ_NAME)
 	$(OBJ_NAME)
 rundb :
 	gdb $(OBJ_NAME)
