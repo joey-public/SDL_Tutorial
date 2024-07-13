@@ -6,62 +6,33 @@
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
 
-//TODO: Fix pointer issue pass by refrence and avoid global window and renderer
-//bool initSdl();
-//bool initWindow(SDL_Window* a_window);
-//bool initRenderer(SDL_Renderer* a_renderer, SDL_Window* a_window);
-void setup();
+//TODO: create setup() function -> initalized sdl, window, and renderer, returns true or false
+//TODO: create initSdl() function
+bool initWindow(SDL_Window** a_window);
+//TODO: create initRenderer() funcion
+bool initRenderer(SDL_Renderer**, SDL_Window** a_window);
+
+//TODO: Get Basic Game Loop
 bool processInput(); //handle user input, return false iff the game should quit
-//void update();
-//void render();
-//void close(SDL_Window* a_window, SDL_Renderer* a_renderer);
+void update();
+void render();
+//TODO: create close() fucntion that deletes everything
 
-
-bool init(SDL_Window* a_window, SDL_Renderer* a_renderer)
-{
-  bool sdl_initilized = initSdl();
-  bool sdl_window_initilized = initWindow(a_window);
-  bool sdl_renderer_initilized = initRenderer(a_renderer, a_window);
-  return sdl_initilized && sdl_window_initilized && sdl_renderer_initilized;
-}
-
-bool initSdl()
-{
-  //initilize SDL
-  if(SDL_Init(SDL_INIT_VIDEO)<0)
-  {
-    printf("SDL could not initilize! SDL Error: %s\n", SDL_GetError());
-    return false;
-  }
-  return true;
-}
-
-bool initWindow(SDL_Window* a_window)
+//pass a pointer to the main window (which has type SDL_Window*) 
+//sojust a pointer to a pointer
+bool initWindow(SDL_Window** a_window)
 {
   //Create a window, returns a pointer to an sdl window structure
-  a_window = SDL_CreateWindow("SDL Tutorial", 
+  //Need to derefrence the passed pointer to properly set the window
+  *a_window = SDL_CreateWindow("SDL Tutorial", 
                               SDL_WINDOWPOS_CENTERED, 
                               SDL_WINDOWPOS_CENTERED, 
                               SCREEN_WIDTH, 
                               SCREEN_HEIGHT, 
                               SDL_WINDOW_SHOWN);
-  if(a_window == NULL)
+  if(*a_window == NULL)
   {
     printf("Window could not be creates! SDL Error: %s\n", SDL_GetError());
-    return false;
-  }
-  return true;
-}
-
-bool initRenderer(SDL_Renderer* a_renderer, SDL_Window* a_window)
-{
-  //(window, driver_code, -1=default, flags)
-  a_renderer = SDL_CreateRenderer(a_window, 
-                                  -1, 
-                                  SDL_RENDERER_ACCELERATED); 
-  if(a_renderer == NULL)
-  {
-    printf("Renderer could not be created! SDL Error: %s\n", SDL_GetError());
     return false;
   }
   return true;
@@ -79,14 +50,6 @@ bool processInput()
   return true;
 }
 
-void close(SDL_Window* a_window, SDL_Renderer* a_renderer)
-{
-  SDL_DestroyRenderer(a_renderer);
-  SDL_DestroyWindow(a_window);
-  SDL_Quit();
-}
-
-
 int main( int argc, char* args[] )
 {
   SDL_Window* main_window = NULL;
@@ -98,16 +61,10 @@ int main( int argc, char* args[] )
     printf("SDL could not initilize! SDL Error: %s\n", SDL_GetError());
     return -1;
   }
-  //Create a window, returns a pointer to an sdl window structure
-  main_window = SDL_CreateWindow("SDL Tutorial", 
-                              SDL_WINDOWPOS_CENTERED, 
-                              SDL_WINDOWPOS_CENTERED, 
-                              SCREEN_WIDTH, 
-                              SCREEN_HEIGHT, 
-                              SDL_WINDOW_SHOWN);
-  if(main_window == NULL)
+  //initilise our main window, if it does not work then return -1, else continue on.  
+  if(!initWindow(&main_window))
   {
-    printf("Window could not be creates! SDL Error: %s\n", SDL_GetError());
+    printf("Window not initilized\n");
     return -1;
   }
   //create a renderer
