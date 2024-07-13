@@ -6,20 +6,23 @@
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
 
-bool initSdl();
-bool initWindow(SDL_Window* a_window);
-bool initRenderer(SDL_Renderer* a_renderer);
-//Loads media
-bool loadMedia();
-//Frees media and shuts down SDL
-void close();
-//Loads individual image as texture
-SDL_Texture* loadTexture( std::string path );
+//TODO: Fix pointer issue pass by refrence and avoid global window and renderer
+//bool initSdl();
+//bool initWindow(SDL_Window* a_window);
+//bool initRenderer(SDL_Renderer* a_renderer, SDL_Window* a_window);
+void setup();
+bool processInput(); //handle user input, return false iff the game should quit
+//void update();
+//void render();
+//void close(SDL_Window* a_window, SDL_Renderer* a_renderer);
 
 
 bool init(SDL_Window* a_window, SDL_Renderer* a_renderer)
 {
-    return initSdl() && initWindow(a_window) && initRenderer(a_renderer);
+  bool sdl_initilized = initSdl();
+  bool sdl_window_initilized = initWindow(a_window);
+  bool sdl_renderer_initilized = initRenderer(a_renderer, a_window);
+  return sdl_initilized && sdl_window_initilized && sdl_renderer_initilized;
 }
 
 bool initSdl()
@@ -37,12 +40,12 @@ bool initWindow(SDL_Window* a_window)
 {
   //Create a window, returns a pointer to an sdl window structure
   a_window = SDL_CreateWindow("SDL Tutorial", 
-                            SDL_WINDOWPOS_UNDEFINED, 
-                            SDL_WINDOWPOS_UNDEFINED, 
-                            SCREEN_WIDTH, 
-                            SCREEN_HEIGHT, 
-                            SDL_WINDOW_SHOWN);
-  if(a_window==NULL)
+                              SDL_WINDOWPOS_CENTERED, 
+                              SDL_WINDOWPOS_CENTERED, 
+                              SCREEN_WIDTH, 
+                              SCREEN_HEIGHT, 
+                              SDL_WINDOW_SHOWN);
+  if(a_window == NULL)
   {
     printf("Window could not be creates! SDL Error: %s\n", SDL_GetError());
     return false;
@@ -50,20 +53,88 @@ bool initWindow(SDL_Window* a_window)
   return true;
 }
 
-bool initRenderer(SDL_Renderer* a_renderer)
+bool initRenderer(SDL_Renderer* a_renderer, SDL_Window* a_window)
 {
+  //(window, driver_code, -1=default, flags)
+  a_renderer = SDL_CreateRenderer(a_window, 
+                                  -1, 
+                                  SDL_RENDERER_ACCELERATED); 
+  if(a_renderer == NULL)
+  {
+    printf("Renderer could not be created! SDL Error: %s\n", SDL_GetError());
+    return false;
+  }
   return true;
 }
+
+bool processInput()
+{
+  SDL_Event event;
+  SDL_PollEvent(&event);
+  switch (event.type)
+  {
+    case SDL_QUIT: 
+      return false;
+  }
+  return true;
+}
+
+void close(SDL_Window* a_window, SDL_Renderer* a_renderer)
+{
+  SDL_DestroyRenderer(a_renderer);
+  SDL_DestroyWindow(a_window);
+  SDL_Quit();
+}
+
 
 int main( int argc, char* args[] )
 {
   SDL_Window* main_window = NULL;
+  SDL_Surface* main_window_surface = NULL;
   SDL_Renderer* main_renderer = NULL;
-  if(!init(main_window, main_renderer))  
-  { 
-    printf("Failed to Initilize!\n"); 
+  //initilize SDL
+  if(SDL_Init(SDL_INIT_VIDEO)<0)
+  {
+    printf("SDL could not initilize! SDL Error: %s\n", SDL_GetError());
     return -1;
   }
-  printf("Hello World!\n");
+  //Create a window, returns a pointer to an sdl window structure
+  main_window = SDL_CreateWindow("SDL Tutorial", 
+                              SDL_WINDOWPOS_CENTERED, 
+                              SDL_WINDOWPOS_CENTERED, 
+                              SCREEN_WIDTH, 
+                              SCREEN_HEIGHT, 
+                              SDL_WINDOW_SHOWN);
+  if(main_window == NULL)
+  {
+    printf("Window could not be creates! SDL Error: %s\n", SDL_GetError());
+    return -1;
+  }
+  //create a renderer
+  //(window, driver_code, -1=default, flags)
+  main_renderer = SDL_CreateRenderer(main_window, 
+                                  -1, 
+                                  SDL_RENDERER_ACCELERATED); 
+  if(main_renderer == NULL)
+  {
+    printf("Renderer could not be created! SDL Error: %s\n", SDL_GetError());
+    return -1;
+  }
+  //temp code to make screen white as a test
+  main_window_surface = SDL_GetWindowSurface(main_window);
+  SDL_FillRect( main_window_surface, NULL, SDL_MapRGB( main_window_surface->format, 0xFF, 0xFF, 0xFF ) );
+  SDL_UpdateWindowSurface(main_window);
+  //main loop
+  bool game_is_running = true;
+  while(game_is_running)
+  {
+    game_is_running = processInput(); 
+  }
+  //destroy everything
+  SDL_DestroyRenderer(main_renderer);
+  SDL_DestroyWindow(main_window);
+  SDL_Quit();
+
+  printf("Thansks for playing :)\n");
   return 0;
 }
