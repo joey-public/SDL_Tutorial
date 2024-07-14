@@ -1,12 +1,14 @@
 #OBJS specifies which files to compile as part of the project
-OBJS = SDL_tutorial.cpp
+OBJS = SDL_tutorial.c
 
 #CC specifies which compiler we're using
-CC = g++
+#CC = g++ #for cpp
+CC = gcc
+  
 
 #COMPILER_FLAGS specifies the additional compilation options we're using
 # -Wall show all warnings
-COMPILER_FLAGS = -Wall 
+COMPILER_FLAGS = -Wall -std=c99 
 
 DEBUG_FLAGS = -g
 
