@@ -4,15 +4,22 @@
 //Screen dimension constants
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
-const int true = 1;
-const int false = 0;
+const int TRUE = 1;
+const int FALSE = 0;
+
+struct ball {
+  float x;
+  float y;
+  float width;
+  float height;
+} ball;
 
 int init(SDL_Window** a_window, SDL_Renderer** a_renderer);
 int initSdl();
 int initWindow(SDL_Window** a_window);
 int initRenderer(SDL_Renderer**, SDL_Window* a_window);
 int setup();
-int processInput(); //handle user input, return false iff the game should quit
+int processInput(); //handle user input, return FALSE iff the game should quit
 int update();
 int render(SDL_Renderer* a_renderer);
 //TODO: create close() fucntion that deletes everything
@@ -31,9 +38,9 @@ int initSdl()
   if(SDL_Init(SDL_INIT_VIDEO)<0)
   {
     printf("SDL could not initilize! SDL Error: %s\n", SDL_GetError());
-    return false;
+    return FALSE;
   }
-  return true;
+  return TRUE;
 }
 
 int initWindow(SDL_Window** a_window)
@@ -51,9 +58,9 @@ int initWindow(SDL_Window** a_window)
   if(*a_window == NULL)
   {
     printf("Window could not be creates! SDL Error: %s\n", SDL_GetError());
-    return false;
+    return FALSE;
   }
-  return true;
+  return TRUE;
 }
 
 int initRenderer(SDL_Renderer** a_renderer, SDL_Window* a_window)
@@ -66,14 +73,18 @@ int initRenderer(SDL_Renderer** a_renderer, SDL_Window* a_window)
   if(*a_renderer == NULL)
   {
     printf("Renderer could not be created! SDL Error: %s\n", SDL_GetError());
-    return false;
+    return FALSE;
   }
-  return true;
+  return TRUE;
 }
 
 int setup()
 {
-  return true;
+  ball.x = 20;
+  ball.y = 20;
+  ball.width = 15;
+  ball.height = 15;
+  return TRUE;
 }
 
 int processInput()
@@ -83,45 +94,51 @@ int processInput()
   switch (event.type)
   {
     case SDL_QUIT: 
-      return false;
+      return FALSE;
       break;
     case SDL_KEYDOWN:
       if (event.key.keysym.sym == SDLK_ESCAPE)
       {
-        return false;
+        return FALSE;
       }
       break;
   }
-  return true;
+  return TRUE;
 }
 
 int update()
 {
-  return true;
+  return TRUE;
 }
 
 int render(SDL_Renderer* a_renderer)
 {
-  return true;
+  //args -> (renderer, r, g, b, a)
+  SDL_SetRenderDrawColor(a_renderer, 248,248,248,255);
+  SDL_RenderClear(a_renderer);
+  SDL_Rect ball_rect = {
+   ball.x,
+   ball.y,
+   ball.width,
+   ball.height
+  };
+  SDL_SetRenderDrawColor(a_renderer, 18,18,18,255);
+  SDL_RenderFillRect(a_renderer, &ball_rect);
+  SDL_RenderPresent(a_renderer);
+  return TRUE;
 }
 
 int main( int argc, char* args[] )
 {
   SDL_Window* main_window = NULL;
-  SDL_Surface* main_window_surface = NULL;
   SDL_Renderer* main_renderer = NULL;
-  int game_is_running = false;
+  int game_is_running = FALSE;
   game_is_running = init(&main_window, &main_renderer);
   if (!game_is_running)
   {
     printf("Setup Failed\n");
     return -1;
   }
-  //temp code to make screen white as a test
-  main_window_surface = SDL_GetWindowSurface(main_window);
-  SDL_FillRect( main_window_surface, 
-                NULL, SDL_MapRGB( main_window_surface->format, 0xFF, 0xFF, 0xFF ) );
-  SDL_UpdateWindowSurface(main_window);
   //main loop
   game_is_running = setup();
   while(game_is_running)
