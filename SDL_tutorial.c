@@ -6,6 +6,8 @@ const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
 const int TRUE = 1;
 const int FALSE = 0;
+const int FPS_TARGET = 60; //frames per sec
+const float FRAME_TARGET_TIME = 1000/FPS_TARGET; //ms 
 
 struct ball {
   float x;
@@ -20,7 +22,7 @@ int initWindow(SDL_Window** a_window);
 int initRenderer(SDL_Renderer**, SDL_Window* a_window);
 int setup();
 int processInput(); //handle user input, return FALSE iff the game should quit
-int update();
+int update(float a_delta_time);
 int render(SDL_Renderer* a_renderer);
 //TODO: create close() fucntion that deletes everything
 
@@ -106,8 +108,10 @@ int processInput()
   return TRUE;
 }
 
-int update()
+int update(float a_delta_time)
 {
+  ball.x += 20 * a_delta_time;
+  ball.y += 10 * a_delta_time;
   return TRUE;
 }
 
@@ -117,10 +121,10 @@ int render(SDL_Renderer* a_renderer)
   SDL_SetRenderDrawColor(a_renderer, 248,248,248,255);
   SDL_RenderClear(a_renderer);
   SDL_Rect ball_rect = {
-   ball.x,
-   ball.y,
-   ball.width,
-   ball.height
+  (int)ball.x,
+  (int)ball.y,
+  (int)ball.width,
+  (int)ball.height
   };
   SDL_SetRenderDrawColor(a_renderer, 18,18,18,255);
   SDL_RenderFillRect(a_renderer, &ball_rect);
@@ -133,6 +137,8 @@ int main( int argc, char* args[] )
   SDL_Window* main_window = NULL;
   SDL_Renderer* main_renderer = NULL;
   int game_is_running = FALSE;
+  int last_frame_time = SDL_GetTicks();
+  float delta_time = 0.0f;
   game_is_running = init(&main_window, &main_renderer);
   if (!game_is_running)
   {
@@ -143,15 +149,22 @@ int main( int argc, char* args[] )
   game_is_running = setup();
   while(game_is_running)
   {
+    //while(!SDL_TICKS_PASSED(SDL_GetTicks(), last_frame_time+FRAME_TARGET_TIME)); 
+    int wait_time = FRAME_TARGET_TIME - (SDL_GetTicks() - last_frame_time);
+    if(wait_time > 0 && wait_time <= FRAME_TARGET_TIME)
+    {
+        SDL_Delay(wait_time);
+    }
+    delta_time = (SDL_GetTicks() - last_frame_time) / 1000.0f;
+    last_frame_time = SDL_GetTicks();//look this up
     game_is_running &= processInput(); 
-    game_is_running &= update();
+    game_is_running &= update(delta_time);
     game_is_running &= render(main_renderer);
   }
   //destroy everything
   SDL_DestroyRenderer(main_renderer);
   SDL_DestroyWindow(main_window);
   SDL_Quit();
-
   printf("Thansks for playing :)\n");
   return 0;
 }
